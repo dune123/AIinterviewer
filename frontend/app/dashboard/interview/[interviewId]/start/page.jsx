@@ -14,7 +14,7 @@ const StartInterview = ({ params }) => {
   const [activeQuestion, setActiveQuestion] = useState(0);
 
   /* Used to Get Interview Details by MockId/Interviews Id */
-  const GetInterviewDetails = async () => {
+ /* const GetInterviewDetails = async () => {
     try {
       const result = await db
         .select()
@@ -43,8 +43,43 @@ const StartInterview = ({ params }) => {
       console.error("Error fetching interview details:", error);
       setMockInterviewQuestions([]); // Fallback to an empty array in case of error
     }
-  };
+  };*/
 
+  const GetInterviewDetails = async () => {
+    try {
+      const [interview] = await db
+        .select()
+        .from(MockInterview)
+        .where(eq(MockInterview.mockId, params.interviewId));
+  
+      if (!interview?.jsonMockResp) {
+        console.error("No interview data found or 'jsonMockResp' is missing.");
+        setMockInterviewQuestions([]);
+        return;
+      }
+  
+      let parsed;
+      try {
+        parsed = JSON.parse(interview.jsonMockResp);
+      } catch (parseError) {
+        console.error("Failed to parse 'jsonMockResp':", parseError);
+        setMockInterviewQuestions([]);
+        return;
+      }
+  
+      if (!Array.isArray(parsed?.interview_questions)) {
+        console.error("'interview_questions' is not a valid array.");
+        setMockInterviewQuestions([]);
+        return;
+      }
+  
+      setInterviewData(interview);
+      setMockInterviewQuestions(parsed.interview_questions);
+    } catch (error) {
+      console.error("Error fetching interview details:", error);
+      setMockInterviewQuestions([]);
+    }
+  };
   useEffect(() => {
     GetInterviewDetails();
   }, [params.interviewId]);
